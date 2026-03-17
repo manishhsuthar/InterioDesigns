@@ -3,6 +3,8 @@ import HeroSection from "@/components/home/HeroSection";
 import FeaturesGrid from "@/components/home/FeaturesGrid";
 import ProjectCardStack from "@/components/home/ProjectCardStack";
 import Footer from "@/components/layout/Footer";
+import contect from "@/components/home/Contact";
+import { Contact } from "lucide-react";
 
 const Index = () => {
   return (
@@ -12,6 +14,7 @@ const Index = () => {
         <HeroSection />
         <FeaturesGrid />
         <ProjectCardStack />
+        <Contact />
       </main>
       <Footer />
     </div>

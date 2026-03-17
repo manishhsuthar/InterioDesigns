@@ -1,0 +1,86 @@
+Design Document: INARA Interior Design Agency Website
+1. Project Overview
+
+Project Name: INARA Website
+
+Industry: Premium Interior Design & Architecture
+
+Core Objective: To establish brand authority through a "soothing and elegant" visual experience that converts high-intent clients by showcasing craftsmanship and luxury.
+2. Visual Strategy & Aesthetics
+
+The design follows a Minimalist Luxury (Quiet Luxury) aesthetic. It avoids cluttered elements, instead using generous white space (negative space) to let the high-quality photography "breathe."
+Color Palette
+
+The palette is earthy and organic, moving away from "clinical" whites toward warmer, "lived-in" tones.
+
+    Primary Background (#F0EDE6): A warm, parchment/off-white that feels more premium and softer than pure white.
+
+    Deep Charcoal (#090704): Used for high-contrast typography and structural elements.
+
+    Accent Earth Tones (#CDBEAB, #A5673F): Muted sands and wood-inspired browns to reinforce the "interior design" theme.
+
+    Call to Action (#F79B5A): A soft terracotta/orange used sparingly to guide the user’s eye to conversion points.
+
+Typography
+
+    Headings: A sophisticated Serif font (likely a variation of a modern Didone or Garamond style). It communicates heritage, elegance, and bespoke service.
+
+    Body/UI Text: A clean, wide-spaced Sans-Serif. This provides modern clarity and balances the traditional feel of the serif headings.
+
+3. UI/UX Component Breakdown
+A. The Hero Section (Conversion Focused)
+
+    Layout: Asymmetrical grid. Large, high-resolution hero imagery of a curated interior space.
+
+    Value Proposition: Large-scale serif headline ("Elevating Your Space" or similar) paired with a concise sub-headline explaining the full-service nature of the agency.
+
+    Social Proof: Integrated "Client Credibility" section (e.g., "Trusted by 500+ homeowners") placed near the CTA to reduce friction.
+
+B. Navigation
+
+    Style: Minimalist floating or top-aligned bar.
+
+    Links: Home, Projects, Services, About, and a distinct "Contact" button.
+
+    Experience: Transparent background that transitions to a solid warm-white on scroll.
+
+C. Imagery & Content Blocks
+
+    Rounded Corners: Subtle border-radii on images to soften the look and feel "organic" rather than "industrial."
+
+    White Space: Heavy use of margins to ensure the user is not overwhelmed, mirroring the feeling of a spacious, well-designed room.
+
+4. Technical Specifications
+Responsive Behavior
+
+    Desktop: Multi-column asymmetrical layouts with parallax scrolling on images.
+
+    Mobile: Single-column stack. Typography should scale significantly (fluid typography) to maintain the "editorial" feel on smaller screens.
+
+Key Interactions
+
+    Hover States: Subtle desaturation or "zoom-in" effects on project thumbnails.
+
+    Transitions: Fade-in-up animations for text blocks to create a "calm" loading experience.
+
+    Custom Cursor: (Optional) A small circular cursor that expands when hovering over clickable images or CTAs.
+
+5. Content Hierarchy (Information Architecture)
+
+    Identity: Who is INARA? (Logo & Hero)
+
+    Validation: Why trust us? (Ratings/Client Logos)
+
+    Portfolios: What have we done? (Large image-led project cards)
+
+    Services: What exactly do we offer? (Architecture, Furniture Sourcing, Renovation)
+
+    CTA: Let’s start your project. (Clean footer/Contact form)
+
+6. Design Principles Summary
+
+    Natural Aesthetics: Use warm tones to reflect a modern living experience.
+
+    Visual Hierarchy: Large headings vs. small, breathable body text.
+
+    Trust-Centric: Immediate inclusion of client accolades and professional photography.

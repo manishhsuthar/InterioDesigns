@@ -1,0 +1,203 @@
+# TECH_STACK.md
+## Interior Design & Renovation Cost Estimation Web App
+
+---
+
+## 1. Overview
+
+This document defines the complete technology stack for the Interior Design & Renovation Cost Estimation Web Application.  
+The stack is optimized for:
+- Fast MVP development
+- Low operational cost
+- Scalability
+- SEO and lead generation
+- Clean admin and estimation workflows
+
+---
+
+## 2. Frontend Stack
+
+### Framework
+- **Next.js (React Framework)**
+- **TypeScript**
+
+### Styling & UI
+- **Tailwind CSS**
+- **ShadCN UI**
+- **Radix UI (via ShadCN)**
+
+### Frontend Responsibilities
+- Landing pages (SEO optimized)
+- Multi-step cost estimation wizard
+- Package comparison UI
+- Admin dashboard UI
+- Responsive design (mobile-first)
+
+---
+
+## 3. Backend Stack
+
+### Runtime & Framework
+- **Node.js**
+- **Express.js**
+- **TypeScript**
+
+### Backend Responsibilities
+- Cost calculation engine
+- Package & pricing management
+- Furniture & renovation logic
+- Lead management
+- PDF quotation generation
+- Authentication & authorization
+
+---
+
+## 4. Database Layer
+
+### Database
+- **PostgreSQL**
+
+### ORM
+- **Prisma ORM**
+
+### Data Managed
+- Packages (Basic / Standard / Premium)
+- Pricing rules (per sq. ft)
+- Furniture catalog
+- Renovation options
+- Location multipliers
+- Users & roles
+- Generated estimates
+- Leads
+
+---
+
+## 5. Authentication & Authorization
+
+- **NextAuth.js**
+- Email / Google authentication
+- Role-based access:
+  - Admin
+  - Sales
+  - Viewer (optional)
+
+---
+
+## 6. Cost Estimation Engine
+
+### Type
+- Rule-based pricing engine
+
+### Logic
+Base Cost = Area (sq.ft) × Package Rate
+Total Cost = Base Cost
++ Furniture Cost
++ Renovation Add-ons
+× Location Multiplier
+
+
+### Characteristics
+- Configurable via admin panel
+- City-based price adjustment
+- Package-based rules
+
+---
+
+## 7. PDF & Document Generation
+
+- **PDFKit** or **Puppeteer**
+
+Used for:
+- Downloadable cost estimation PDFs
+- Client-ready quotations
+- Branding-ready templates
+
+---
+
+## 8. File & Media Storage
+
+- **Cloudinary**
+
+Used for:
+- Furniture images
+- Material previews
+- Generated PDF storage (optional)
+
+---
+
+## 9. Hosting & Deployment
+
+### Frontend
+- **Vercel**
+
+### Backend
+- **Render** or **Railway**
+
+### Database
+- **Neon (PostgreSQL)**
+
+### CI/CD
+- GitHub → Auto-deploy on push
+
+---
+
+## 10. Admin Panel
+
+### Built With
+- Next.js (same codebase)
+- Role-protected routes
+
+### Admin Capabilities
+- Manage packages & pricing
+- Configure furniture rates
+- Set location multipliers
+- View & export leads
+- Update PDF templates
+
+---
+
+## 11. Analytics & Monitoring
+
+- **Google Analytics** – user behavior
+- **Sentry** – error tracking
+- **PostHog (optional)** – product analytics
+
+---
+
+## 12. Security & Performance
+
+- HTTPS enforced
+- Input validation
+- Environment-based secrets
+- Rate limiting (API)
+- Optimized SSR & caching
+
+---
+
+## 13. Estimated Monthly Cost
+
+| Service        | Cost        |
+|---------------|------------|
+| Vercel        | Free       |
+| Render        | Free / ₹500|
+| Neon DB       | Free       |
+| Cloudinary    | Free       |
+| **Total**     | ₹0 – ₹1,000|
+
+---
+
+## 14. Future Scalability
+
+- Add Redis for caching
+- Introduce background jobs
+- Vendor marketplace integration
+- AI-based recommendations
+- Mobile app (React Native)
+
+---
+
+## 15. Conclusion
+
+This tech stack provides a strong foundation for building a scalable, cost-efficient, and professional interior design cost estimation platform suitable for MVP launch and future enterprise expansion.
+
+---

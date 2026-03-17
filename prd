@@ -1,0 +1,405 @@
+PRODUCT REQUIREMENTS DOCUMENT (PRD)
+1. Product Overview
+
+Product Name (Working Title):
+InteriorPro – Interior Design & Renovation Estimator
+
+Product Type:
+Web Application (Responsive, Mobile-First)
+
+Primary Objective:
+Enable users to estimate the cost of a full interior makeover—including residential, commercial, office, and furniture work—by selecting predefined packages and customization options.
+
+Core Value Proposition:
+
+Transparent pricing
+
+Quick cost estimation
+
+Structured packages (Basic, Standard, Premium)
+
+Covers new interiors + renovation projects
+
+2. Target Users
+2.1 Primary Users
+
+Homeowners (Flats, Villas, Independent Houses)
+
+Office Owners / Startups
+
+Commercial Space Owners (Shops, Cafes, Showrooms)
+
+2.2 Secondary Users
+
+Interior Design Firms
+
+Contractors
+
+Sales Teams (for quotations)
+
+3. User Personas
+Persona 1: Residential Owner
+
+Wants full home interior within a fixed budget
+
+Needs quick cost estimate before meeting designer
+
+Persona 2: Commercial Owner
+
+Wants office/store interior with furniture & lighting
+
+Requires renovation + modular furniture pricing
+
+Persona 3: Sales Executive
+
+Uses app to generate quotation for clients
+
+4. Scope of the Application
+4.1 Property Types
+
+Residential
+
+1 BHK / 2 BHK / 3 BHK / Villa
+
+Commercial
+
+Shop
+
+Showroom
+
+Cafe / Restaurant
+
+Office
+
+Startup Office
+
+Corporate Office
+
+5. Core Features
+5.1 Project Setup
+
+User selects:
+
+Property Type (Residential / Commercial / Office)
+
+Project Type:
+
+New Interior
+
+Renovation
+
+Area (sq. ft)
+
+Number of rooms / workspaces
+
+5.2 Interior Packages
+Package 1: Basic
+
+Target: Budget-friendly customers
+
+Includes:
+
+Basic modular furniture
+
+Standard laminates
+
+Basic lighting
+
+Minimal false ceiling
+
+Basic kitchen / storage
+
+Standard fittings
+
+Package 2: Standard
+
+Target: Mid-range customers
+
+Includes:
+
+Modular furniture with premium laminates
+
+Designer lighting
+
+Full false ceiling
+
+Modular kitchen
+
+Wardrobes & storage
+
+Basic smart accessories
+
+Package 3: Premium
+
+Target: Luxury customers
+
+Includes:
+
+Custom furniture
+
+Premium finishes (acrylic, veneer)
+
+Smart lighting
+
+Full automation ready
+
+Designer ceiling
+
+Premium hardware
+
+Luxury kitchen & wardrobes
+
+5.3 Furniture Categories
+
+Modular Kitchen
+
+Wardrobes
+
+TV Unit
+
+Bed & Storage
+
+Sofa & Seating
+
+Office Workstations
+
+Ready-made Furniture (optional add-on)
+
+5.4 Renovation Module
+
+Users can choose:
+
+Partial Renovation
+
+Full Renovation
+
+Renovation Options:
+
+Flooring replacement
+
+Wall repainting
+
+Electrical rewiring
+
+Plumbing upgrade
+
+Ceiling modification
+
+Furniture replacement
+
+5.5 Cost Estimation Engine
+Inputs:
+
+Area (sq. ft)
+
+Selected package
+
+Furniture items
+
+Renovation options
+
+Material quality
+
+City/location (cost variation)
+
+Outputs:
+
+Estimated Total Cost
+
+Cost breakdown:
+
+Furniture
+
+Material
+
+Labor
+
+Electrical
+
+Plumbing
+
+Timeline estimate (weeks)
+
+6. User Flow
+
+Landing Page
+
+Select Property Type
+
+Select New / Renovation
+
+Enter Area & Room Count
+
+Choose Package (Basic / Standard / Premium)
+
+Select Furniture & Add-ons
+
+View Cost Estimation
+
+Download / Share Estimate
+
+Contact Designer / Book Consultation
+
+7. Pages & UI Screens
+7.1 Landing Page
+
+Hero section with CTA
+
+Package overview
+
+How it works
+
+Sample estimates
+
+7.2 Estimation Wizard
+
+Step-by-step form
+
+Progress indicator
+
+7.3 Cost Breakdown Page
+
+Itemized pricing
+
+Editable options
+
+7.4 User Dashboard (Optional)
+
+Saved estimates
+
+Download PDFs
+
+Project history
+
+8. Functional Requirements
+8.1 Must-Have
+
+Responsive UI
+
+Real-time cost calculation
+
+PDF export
+
+Package comparison
+
+Admin pricing control
+
+8.2 Nice-to-Have
+
+AI-based recommendation
+
+Material image previews
+
+3D preview integration
+
+Multi-language support
+
+9. Admin Panel Requirements
+
+Manage pricing per sq. ft
+
+Package configuration
+
+Furniture price control
+
+Location-based price multiplier
+
+Lead management
+
+PDF template customization
+
+10. Non-Functional Requirements
+
+Fast load time (< 2s)
+
+Secure data storage
+
+Scalable architecture
+
+SEO optimized
+
+High availability
+
+11. Technology Stack (Suggested)
+Frontend
+
+React.js / Next.js
+
+Tailwind CSS
+
+Backend
+
+Node.js (Express) or Django
+
+REST APIs
+
+Database
+
+PostgreSQL / MongoDB
+
+Hosting
+
+Vercel (Frontend)
+
+Render / Railway (Backend)
+
+12. Cost Calculation Logic (High Level)
+Total Cost =
+(Area × Package Rate)
++ Furniture Cost
++ Renovation Add-ons
++ Location Multiplier
+
+13. KPIs & Success Metrics
+
+Estimation completion rate
+
+Leads generated
+
+Conversion to consultation
+
+Average session time
+
+14. Future Enhancements
+
+Vendor marketplace
+
+EMI calculator
+
+AR room preview
+
+CRM integration
+
+WhatsApp quotation sharing
+
+15. Risks & Assumptions
+Risks
+
+Pricing inaccuracies
+
+User expectation mismatch
+
+Assumptions
+
+Approximate estimates, not final quotes
+
+Prices vary by region
+
+16. Legal & Compliance
+
+Disclaimer for estimated pricing
+
+Data privacy compliance
+
+Terms & Conditions
+
+17. Milestones
+Phase	Duration
+PRD Finalization	1 week
+UI/UX Design	2 weeks
+Development	6–8 weeks
+Testing	1 week
+Launch	1 week
+18. Conclusion
+
+This application will act as a digital quotation & lead generation system for interior design and renovation businesses while providing users with transparent, fast, and structured cost estimation.
