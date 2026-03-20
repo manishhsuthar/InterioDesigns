@@ -5,18 +5,61 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import InterioLogo from "@/components/ui/InterioLogo";
 import signupBg from "@/assets/signup-bg.jpg";
+import { toast } from "@/hooks/use-toast";
+import { apiUrl } from "@/lib/api";
 
 const Signup = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle signup logic
-    navigate("/");
+    if (!agreeTerms) {
+      toast({
+        title: "Please accept terms",
+        description: "You need to accept Terms & Conditions to continue.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(apiUrl("/auth/signup/"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Signup failed");
+      }
+
+      toast({
+        title: "Account created",
+        description: "You can now log in with your new account.",
+      });
+      navigate("/login");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to create account right now.";
+      toast({
+        title: "Signup failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -135,9 +178,10 @@ const Signup = () => {
 
             <Button
               type="submit"
+              disabled={isSubmitting}
               className="w-full rounded-3xl py-6 text-base font-medium bg-terracotta hover:bg-terracotta/90 text-terracotta-foreground hover-scale"
             >
-              Sign Up
+              {isSubmitting ? "Creating..." : "Sign Up"}
             </Button>
           </form>
 

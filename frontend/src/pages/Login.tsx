@@ -5,18 +5,53 @@ import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import InterioLogo from "@/components/ui/InterioLogo";
 import loginBg from "@/assets/login-bg.jpg";
+import { toast } from "@/hooks/use-toast";
+import { apiUrl } from "@/lib/api";
 
 const Login = () => {
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic
-    navigate("/");
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(apiUrl("/auth/login/"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          rememberMe,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed");
+      }
+
+      localStorage.setItem("interio_user", JSON.stringify(data.user));
+      toast({
+        title: "Login successful",
+        description: `Welcome back${data.user?.name ? `, ${data.user.name}` : ""}.`,
+      });
+      navigate("/");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to login right now.";
+      toast({
+        title: "Login failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -139,9 +174,10 @@ const Login = () => {
 
             <Button
               type="submit"
+              disabled={isSubmitting}
               className="w-full rounded-3xl py-6 text-base font-medium bg-terracotta hover:bg-terracotta/90 text-terracotta-foreground hover-scale"
             >
-              Login
+              {isSubmitting ? "Logging in..." : "Login"}
             </Button>
           </form>
 

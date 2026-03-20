@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-living-room.jpg";
@@ -51,7 +50,7 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
           >
-            <Link to="/explore">
+            <a href="#explore">
               <Button
                 variant="default"
                 size="lg"
@@ -59,7 +58,7 @@ const HeroSection = () => {
               >
                 Get Started
               </Button>
-            </Link>
+            </a>
           </motion.div>
         </motion.div>
       </div>

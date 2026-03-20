@@ -3,18 +3,23 @@ import HeroSection from "@/components/home/HeroSection";
 import FeaturesGrid from "@/components/home/FeaturesGrid";
 import ProjectCardStack from "@/components/home/ProjectCardStack";
 import Footer from "@/components/layout/Footer";
-import contect from "@/components/home/Contact";
-import { Contact } from "lucide-react";
+import ExploreSection from "@/components/landing/ExploreSection";
+import AboutSection from "@/components/landing/AboutSection";
+import ContactSection from "@/components/landing/ContactSection";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <main>
-        <HeroSection />
+        <section id="home" className="scroll-mt-32">
+          <HeroSection />
+        </section>
         <FeaturesGrid />
         <ProjectCardStack />
-        <Contact />
+        <ExploreSection />
+        <AboutSection />
+        <ContactSection />
       </main>
       <Footer />
     </div>

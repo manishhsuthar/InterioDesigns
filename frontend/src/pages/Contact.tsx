@@ -4,6 +4,8 @@ import { Mail, Phone, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
+import { toast } from "@/hooks/use-toast";
+import { apiUrl } from "@/lib/api";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -11,10 +13,39 @@ const Contact = () => {
     email: "",
     message: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(apiUrl("/contact/"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send message");
+      }
+
+      toast({
+        title: "Message sent",
+        description: "Thanks for reaching out. Our team will get back to you soon.",
+      });
+      setFormData({ name: "", email: "", message: "" });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to send message right now.";
+      toast({
+        title: "Could not send message",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -122,9 +153,10 @@ const Contact = () => {
 
                 <Button
                   type="submit"
+                  disabled={isSubmitting}
                   className="w-full rounded-3xl py-6 text-base font-medium hover-scale"
                 >
-                  Send Message
+                  {isSubmitting ? "Sending..." : "Send Message"}
                 </Button>
               </form>
             </motion.div>

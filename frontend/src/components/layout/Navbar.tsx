@@ -1,21 +1,20 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Search, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import InterioLogo from "@/components/ui/InterioLogo";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
-  { name: "Home", path: "/" },
-  { name: "Explore", path: "/explore" },
-  { name: "Contact", path: "/contact" },
-  { name: "About Us", path: "/about" },
+  { name: "Home", path: "#home" },
+  { name: "Explore", path: "#explore" },
+  { name: "Contact", path: "#contact" },
+  { name: "About Us", path: "#about" },
 ];
 
 const Navbar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const location = useLocation();
 
   return (
     <>
@@ -27,17 +26,13 @@ const Navbar = () => {
 
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
-              <Link
+              <a
                 key={link.path}
-                to={link.path}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  location.pathname === link.path
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                }`}
+                href={link.path}
+                className="text-sm font-medium transition-colors hover:text-primary text-muted-foreground"
               >
                 {link.name}
-              </Link>
+              </a>
             ))}
           </div>
 
