@@ -7,6 +7,13 @@ import { apiUrl } from "@/lib/api";
 const steps = ["BHK Type", "Rooms To Design", "Package", "Get Quote"];
 
 const bhkOptions = ["1 BHK", "2 BHK", "3 BHK", "4 BHK", "5 BHK+"];
+const bhkToStandardSqftMap: Record<string, number> = {
+  "1 BHK": 400,
+  "2 BHK": 800,
+  "3 BHK": 1200,
+  "4 BHK": 1800,
+  "5 BHK+": 2500,
+};
 
 const roomsByEstimateType: Record<string, string[]> = {
   "Full Home Interior": ["Living Room", "Kitchen", "Master Bedroom", "Wardrobe"],
@@ -15,13 +22,6 @@ const roomsByEstimateType: Record<string, string[]> = {
 };
 
 const packageOptions = ["Essential", "Premium", "Luxury"];
-const bhkToAreaMap: Record<string, number> = {
-  "1 BHK": 600,
-  "2 BHK": 900,
-  "3 BHK": 1200,
-  "4 BHK": 1600,
-  "5 BHK+": 2200,
-};
 const packageTierMap: Record<string, "basic" | "standard" | "premium"> = {
   Essential: "basic",
   Premium: "standard",
@@ -68,6 +68,8 @@ const EstimateSurvey = () => {
 
   const [currentStep, setCurrentStep] = useState(0);
   const [bhkType, setBhkType] = useState("");
+  const [sqftMode, setSqftMode] = useState<"standard" | "custom">("standard");
+  const [customSqft, setCustomSqft] = useState("");
   const [rooms, setRooms] = useState<string[]>([]);
   const [selectedPackage, setSelectedPackage] = useState("");
   const [addOns, setAddOns] = useState<string[]>([]);
@@ -82,12 +84,19 @@ const EstimateSurvey = () => {
   }, [estimateType]);
 
   const canProceed = useMemo(() => {
-    if (currentStep === 0) return Boolean(bhkType);
+    if (currentStep === 0) {
+      if (!bhkType) return false;
+      if (sqftMode === "custom") {
+        const value = Number(customSqft);
+        return Number.isFinite(value) && value > 0;
+      }
+      return true;
+    }
     if (currentStep === 1) return rooms.length > 0;
     if (currentStep === 2) return Boolean(selectedPackage);
     if (currentStep === 3) return Boolean(fullName.trim() && phone.trim() && city.trim());
     return false;
-  }, [currentStep, bhkType, rooms.length, selectedPackage, fullName, phone, city]);
+  }, [currentStep, bhkType, sqftMode, customSqft, rooms.length, selectedPackage, fullName, phone, city]);
 
   const toggleRoom = (room: string) => {
     setRooms((prev) => (prev.includes(room) ? prev.filter((item) => item !== room) : [...prev, room]));
@@ -109,6 +118,8 @@ const EstimateSurvey = () => {
   const resetForm = () => {
     setCurrentStep(0);
     setBhkType("");
+    setSqftMode("standard");
+    setCustomSqft("");
     setRooms([]);
     setSelectedPackage("");
     setAddOns([]);
@@ -122,12 +133,15 @@ const EstimateSurvey = () => {
     if (!canProceed) return;
     setIsSubmitting(true);
     try {
+      const standardSqft = bhkToStandardSqftMap[bhkType] ?? 800;
+      const areaSqft = sqftMode === "custom" ? Number(customSqft) || standardSqft : standardSqft;
+
       const payload = {
         name: fullName.trim(),
         email: "",
         property_type: "residential",
         project_type: "new",
-        area_sqft: bhkToAreaMap[bhkType] ?? 900,
+        area_sqft: areaSqft,
         room_count: rooms.length,
         package_tier: packageTierMap[selectedPackage] ?? "basic",
         city: city.trim(),
@@ -137,6 +151,7 @@ const EstimateSurvey = () => {
         request_source: "estimate-survey",
         estimate_type: estimateType,
         bhk_type: bhkType,
+        sqft_mode: sqftMode,
         selected_rooms: rooms,
         phone: phone.trim(),
       };
@@ -323,13 +338,59 @@ const EstimateSurvey = () => {
                           name="bhk"
                           value={option}
                           checked={bhkType === option}
-                          onChange={() => setBhkType(option)}
+                          onChange={() => {
+                            setBhkType(option);
+                            setSqftMode("standard");
+                            setCustomSqft("");
+                          }}
                           className="h-4 w-4"
                         />
                         <span className="text-base font-medium text-foreground">{option}</span>
                       </label>
                     ))}
                   </div>
+
+                  {bhkType && (
+                    <div className="mt-6 rounded-xl border border-border bg-background p-4">
+                      <p className="mb-3 text-sm font-semibold text-foreground">Select sqft option</p>
+                      <div className="space-y-3">
+                        <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border px-3 py-3">
+                          <input
+                            type="radio"
+                            name="sqftMode"
+                            checked={sqftMode === "standard"}
+                            onChange={() => setSqftMode("standard")}
+                            className="h-4 w-4"
+                          />
+                          <span className="text-sm text-foreground">
+                            Standard ({bhkType} = {bhkToStandardSqftMap[bhkType]} sq.ft)
+                          </span>
+                        </label>
+
+                        <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-border px-3 py-3">
+                          <input
+                            type="radio"
+                            name="sqftMode"
+                            checked={sqftMode === "custom"}
+                            onChange={() => setSqftMode("custom")}
+                            className="h-4 w-4"
+                          />
+                          <span className="text-sm text-foreground">Custom</span>
+                        </label>
+
+                        {sqftMode === "custom" && (
+                          <input
+                            type="number"
+                            min={1}
+                            value={customSqft}
+                            onChange={(e) => setCustomSqft(e.target.value)}
+                            placeholder="Enter custom sqft"
+                            className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
