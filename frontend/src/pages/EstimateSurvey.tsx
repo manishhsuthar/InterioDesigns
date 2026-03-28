@@ -1,6 +1,8 @@
 import { FormEvent, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import InterioLogo from "@/components/ui/InterioLogo";
+import { toast } from "@/hooks/use-toast";
+import { apiUrl } from "@/lib/api";
 
 const steps = ["BHK Type", "Rooms To Design", "Package", "Get Quote"];
 
@@ -13,6 +15,18 @@ const roomsByEstimateType: Record<string, string[]> = {
 };
 
 const packageOptions = ["Essential", "Premium", "Luxury"];
+const bhkToAreaMap: Record<string, number> = {
+  "1 BHK": 600,
+  "2 BHK": 900,
+  "3 BHK": 1200,
+  "4 BHK": 1600,
+  "5 BHK+": 2200,
+};
+const packageTierMap: Record<string, "basic" | "standard" | "premium"> = {
+  Essential: "basic",
+  Premium: "standard",
+  Luxury: "premium",
+};
 
 const EstimateSurvey = () => {
   const [searchParams] = useSearchParams();
@@ -25,6 +39,7 @@ const EstimateSurvey = () => {
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const roomOptions = useMemo(() => {
     return roomsByEstimateType[estimateType] || roomsByEstimateType["Full Home Interior"];
@@ -51,13 +66,63 @@ const EstimateSurvey = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 0));
   };
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!canProceed) return;
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        name: fullName.trim(),
+        email: "",
+        property_type: "residential",
+        project_type: "new",
+        area_sqft: bhkToAreaMap[bhkType] ?? 900,
+        room_count: rooms.length,
+        package_tier: packageTierMap[selectedPackage] ?? "basic",
+        city: city.trim(),
+        selected_furniture: [],
+        selected_renovations: [],
+        request_source: "estimate-survey",
+        estimate_type: estimateType,
+        bhk_type: bhkType,
+        selected_rooms: rooms,
+        phone: phone.trim(),
+      };
 
-    alert(
-      `Quote request submitted for ${estimateType}.\\nBHK: ${bhkType}\\nRooms: ${rooms.join(", ")}\\nPackage: ${selectedPackage}`,
-    );
+      const response = await fetch(apiUrl("/estimate/"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to submit estimate request");
+      }
+
+      toast({
+        title: "Estimate request submitted",
+        description: "Thanks! Our team will contact you with your quote details soon.",
+      });
+
+      setCurrentStep(0);
+      setBhkType("");
+      setRooms([]);
+      setSelectedPackage("");
+      setFullName("");
+      setPhone("");
+      setCity("");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to submit estimate request right now.";
+      toast({
+        title: "Submission failed",
+        description: message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -224,10 +289,10 @@ const EstimateSurvey = () => {
             ) : (
               <button
                 type="submit"
-                disabled={!canProceed}
+                disabled={!canProceed || isSubmitting}
                 className="rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
               >
-                SUBMIT
+                {isSubmitting ? "SUBMITTING..." : "SUBMIT"}
               </button>
             )}
           </div>
