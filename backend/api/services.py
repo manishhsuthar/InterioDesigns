@@ -12,6 +12,45 @@ QUALITY_MULTIPLIERS = {
     "luxury": Decimal("1.40"),
 }
 
+SURVEY_BASE_COST_BY_BHK = {
+    "1 BHK": Decimal("300000"),
+    "2 BHK": Decimal("450000"),
+    "3 BHK": Decimal("650000"),
+    "4 BHK": Decimal("850000"),
+    "5 BHK+": Decimal("1100000"),
+}
+
+SURVEY_ROOM_COSTS = {
+    "Living Room": Decimal("120000"),
+    "Kitchen": Decimal("180000"),
+    "Master Bedroom": Decimal("140000"),
+    "Wardrobe": Decimal("90000"),
+    "Modular Kitchen": Decimal("180000"),
+    "Utility Area": Decimal("50000"),
+    "Pantry": Decimal("60000"),
+    "Master Wardrobe": Decimal("95000"),
+    "Kids Wardrobe": Decimal("75000"),
+    "Guest Wardrobe": Decimal("70000"),
+}
+
+SURVEY_PACKAGE_MULTIPLIERS = {
+    "basic": Decimal("1.00"),
+    "standard": Decimal("1.40"),
+    "premium": Decimal("2.00"),
+}
+
+SURVEY_ADD_ON_COSTS = {
+    "false_ceiling": Decimal("85000"),
+    "lighting": Decimal("60000"),
+    "smart_home": Decimal("150000"),
+}
+
+SURVEY_PACKAGE_LABELS = {
+    "basic": "Essential",
+    "standard": "Premium",
+    "premium": "Luxury",
+}
+
 
 def quantize_money(value: Decimal) -> Decimal:
     return value.quantize(Decimal("0.01"))
@@ -212,4 +251,86 @@ def compute_estimate(
         },
         "timeline_weeks": timeline_weeks,
         "disclaimer": "This is an estimate only. Final cost may vary based on site conditions and material availability.",
+    }
+
+
+def compute_survey_quote(
+    bhk_type: str,
+    selected_rooms: list,
+    package_tier: str,
+    estimate_type: str,
+    selected_add_ons: list,
+) -> dict:
+    applied_rules = []
+    if not isinstance(selected_rooms, list):
+        selected_rooms = []
+    if not isinstance(selected_add_ons, list):
+        selected_add_ons = []
+
+    normalized_rooms = [str(room) for room in selected_rooms if str(room).strip()]
+    if estimate_type == "Full Home Interior" and "Kitchen" not in normalized_rooms:
+        normalized_rooms.append("Kitchen")
+        applied_rules.append("Kitchen was auto-added because it is mandatory for full-home estimates.")
+
+    effective_package_tier = package_tier
+    if bhk_type == "1 BHK" and package_tier == "premium":
+        effective_package_tier = "standard"
+        applied_rules.append("Luxury package is not available for 1 BHK, so Premium was applied instead.")
+
+    base_cost = SURVEY_BASE_COST_BY_BHK.get(bhk_type, SURVEY_BASE_COST_BY_BHK["2 BHK"])
+
+    room_line_items = []
+    rooms_cost = Decimal("0")
+    for room in normalized_rooms:
+        room_cost = SURVEY_ROOM_COSTS.get(room)
+        if room_cost is None:
+            continue
+        rooms_cost += room_cost
+        room_line_items.append({"name": room, "cost": float(quantize_money(room_cost))})
+
+    add_on_line_items = []
+    add_ons_cost = Decimal("0")
+    for add_on in selected_add_ons:
+        add_on_key = str(add_on)
+        add_on_cost = SURVEY_ADD_ON_COSTS.get(add_on_key)
+        if add_on_cost is None:
+            continue
+        add_ons_cost += add_on_cost
+        add_on_line_items.append({"name": add_on_key, "cost": float(quantize_money(add_on_cost))})
+
+    subtotal = base_cost + rooms_cost + add_ons_cost
+    package_multiplier = SURVEY_PACKAGE_MULTIPLIERS.get(effective_package_tier, Decimal("1.00"))
+    package_adjusted_total = quantize_money(subtotal * package_multiplier)
+
+    discount_pct = Decimal("0.00")
+    if effective_package_tier == "standard" and subtotal >= Decimal("700000"):
+        discount_pct = Decimal("0.03")
+        applied_rules.append("3% package discount applied for Premium plan above 700,000 subtotal.")
+    if effective_package_tier == "premium" and subtotal >= Decimal("1000000"):
+        discount_pct = Decimal("0.05")
+        applied_rules.append("5% package discount applied for Luxury plan above 1,000,000 subtotal.")
+
+    discount_amount = quantize_money(package_adjusted_total * discount_pct)
+    estimated_total = quantize_money(package_adjusted_total - discount_amount)
+
+    return {
+        "quote_type": "structured_survey",
+        "bhk_type": bhk_type,
+        "estimate_type": estimate_type,
+        "package_selected": SURVEY_PACKAGE_LABELS.get(package_tier, package_tier.title()),
+        "package_applied": SURVEY_PACKAGE_LABELS.get(effective_package_tier, effective_package_tier.title()),
+        "base_cost": float(quantize_money(base_cost)),
+        "rooms_cost": float(quantize_money(rooms_cost)),
+        "add_ons_cost": float(quantize_money(add_ons_cost)),
+        "subtotal_before_package": float(quantize_money(subtotal)),
+        "package_multiplier": float(package_multiplier),
+        "package_impact_amount": float(quantize_money(package_adjusted_total - subtotal)),
+        "package_adjusted_total": float(package_adjusted_total),
+        "discount_pct": float(discount_pct),
+        "discount_amount": float(discount_amount),
+        "estimated_total": float(estimated_total),
+        "room_line_items": room_line_items,
+        "add_on_line_items": add_on_line_items,
+        "applied_rules": applied_rules,
+        "disclaimer": "Estimate is indicative and can vary after site measurement, material choices, and execution constraints.",
     }

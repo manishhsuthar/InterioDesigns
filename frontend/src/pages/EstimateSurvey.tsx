@@ -27,6 +27,40 @@ const packageTierMap: Record<string, "basic" | "standard" | "premium"> = {
   Premium: "standard",
   Luxury: "premium",
 };
+const addOnOptions = [
+  { id: "false_ceiling", label: "False Ceiling" },
+  { id: "lighting", label: "Lighting Upgrade" },
+  { id: "smart_home", label: "Smart Home Features" },
+];
+
+type SurveyQuoteResult = {
+  bhk_type: string;
+  estimate_type: string;
+  package_selected: string;
+  package_applied: string;
+  base_cost: number;
+  rooms_cost: number;
+  add_ons_cost: number;
+  subtotal_before_package: number;
+  package_multiplier: number;
+  package_impact_amount: number;
+  package_adjusted_total: number;
+  discount_pct: number;
+  discount_amount: number;
+  estimated_total: number;
+  room_line_items: { name: string; cost: number }[];
+  add_on_line_items: { name: string; cost: number }[];
+  applied_rules: string[];
+  disclaimer: string;
+};
+
+function formatINR(value: number): string {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
 
 const EstimateSurvey = () => {
   const [searchParams] = useSearchParams();
@@ -36,10 +70,12 @@ const EstimateSurvey = () => {
   const [bhkType, setBhkType] = useState("");
   const [rooms, setRooms] = useState<string[]>([]);
   const [selectedPackage, setSelectedPackage] = useState("");
+  const [addOns, setAddOns] = useState<string[]>([]);
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [quoteResult, setQuoteResult] = useState<SurveyQuoteResult | null>(null);
 
   const roomOptions = useMemo(() => {
     return roomsByEstimateType[estimateType] || roomsByEstimateType["Full Home Interior"];
@@ -66,6 +102,21 @@ const EstimateSurvey = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 0));
   };
 
+  const toggleAddOn = (addOnId: string) => {
+    setAddOns((prev) => (prev.includes(addOnId) ? prev.filter((id) => id !== addOnId) : [...prev, addOnId]));
+  };
+
+  const resetForm = () => {
+    setCurrentStep(0);
+    setBhkType("");
+    setRooms([]);
+    setSelectedPackage("");
+    setAddOns([]);
+    setFullName("");
+    setPhone("");
+    setCity("");
+  };
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     if (!canProceed) return;
@@ -82,6 +133,7 @@ const EstimateSurvey = () => {
         city: city.trim(),
         selected_furniture: [],
         selected_renovations: [],
+        add_ons: addOns,
         request_source: "estimate-survey",
         estimate_type: estimateType,
         bhk_type: bhkType,
@@ -101,18 +153,11 @@ const EstimateSurvey = () => {
         throw new Error(data.error || "Failed to submit estimate request");
       }
 
+      setQuoteResult(data.result);
       toast({
-        title: "Estimate request submitted",
-        description: "Thanks! Our team will contact you with your quote details soon.",
+        title: "Quote generated",
+        description: "Your estimate is ready with a detailed cost breakdown.",
       });
-
-      setCurrentStep(0);
-      setBhkType("");
-      setRooms([]);
-      setSelectedPackage("");
-      setFullName("");
-      setPhone("");
-      setCity("");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to submit estimate request right now.";
       toast({
@@ -156,147 +201,268 @@ const EstimateSurvey = () => {
       </header>
 
       <main className="px-4 py-8 md:px-8">
-        <form
-          onSubmit={handleSubmit}
-          className="mx-auto flex min-h-[65vh] w-full max-w-2xl flex-col rounded-3xl border border-border bg-card shadow-sm"
-        >
-          <div className="flex-1 px-6 py-8 md:px-10 md:py-10">
-            <p className="mb-2 text-sm font-medium text-primary">Estimate: {estimateType}</p>
+        {quoteResult ? (
+          <div className="mx-auto w-full max-w-3xl rounded-3xl border border-border bg-card shadow-sm">
+            <div className="border-b border-border px-6 py-6 md:px-10">
+              <p className="text-sm font-medium text-primary">Quote Summary</p>
+              <h1 className="mt-1 text-3xl font-bold text-foreground">{formatINR(quoteResult.estimated_total)}</h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {quoteResult.estimate_type} • {quoteResult.bhk_type} • {quoteResult.package_applied}
+              </p>
+            </div>
 
-            {currentStep === 0 && (
+            <div className="space-y-6 px-6 py-6 md:px-10">
+              <div className="space-y-2 rounded-2xl border border-border bg-background p-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Base Cost</span>
+                  <span className="font-semibold">{formatINR(quoteResult.base_cost)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>Rooms Cost</span>
+                  <span className="font-semibold">{formatINR(quoteResult.rooms_cost)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>Add-ons Cost</span>
+                  <span className="font-semibold">{formatINR(quoteResult.add_ons_cost)}</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-border pt-2 text-sm">
+                  <span>Subtotal</span>
+                  <span className="font-semibold">{formatINR(quoteResult.subtotal_before_package)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>Package Impact ({quoteResult.package_multiplier}x)</span>
+                  <span className="font-semibold">+{formatINR(quoteResult.package_impact_amount)}</span>
+                </div>
+                {quoteResult.discount_amount > 0 && (
+                  <div className="flex items-center justify-between text-sm text-green-700">
+                    <span>Discount ({Math.round(quoteResult.discount_pct * 100)}%)</span>
+                    <span className="font-semibold">-{formatINR(quoteResult.discount_amount)}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between border-t border-border pt-2 text-base font-semibold">
+                  <span>Estimated Total</span>
+                  <span>{formatINR(quoteResult.estimated_total)}</span>
+                </div>
+              </div>
+
               <div>
-                <h1 className="mb-2 text-3xl font-bold text-foreground">Select your BHK type</h1>
-                <p className="mb-6 text-muted-foreground">Choose the home size to continue your estimate.</p>
-                <div className="space-y-3">
-                  {bhkOptions.map((option) => (
-                    <label
-                      key={option}
-                      className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-background px-4 py-4"
-                    >
-                      <input
-                        type="radio"
-                        name="bhk"
-                        value={option}
-                        checked={bhkType === option}
-                        onChange={() => setBhkType(option)}
-                        className="h-4 w-4"
-                      />
-                      <span className="text-base font-medium text-foreground">{option}</span>
-                    </label>
+                <h2 className="mb-2 text-lg font-semibold text-foreground">Rooms Breakdown</h2>
+                <div className="space-y-2">
+                  {quoteResult.room_line_items.map((item) => (
+                    <div key={item.name} className="flex items-center justify-between rounded-xl border border-border bg-background px-4 py-2 text-sm">
+                      <span>{item.name}</span>
+                      <span className="font-semibold">{formatINR(item.cost)}</span>
+                    </div>
                   ))}
                 </div>
               </div>
-            )}
 
-            {currentStep === 1 && (
-              <div>
-                <h1 className="mb-2 text-3xl font-bold text-foreground">Rooms to design</h1>
-                <p className="mb-6 text-muted-foreground">Pick all rooms you want us to include in the estimate.</p>
-                <div className="space-y-3">
-                  {roomOptions.map((room) => (
-                    <label
-                      key={room}
-                      className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-background px-4 py-4"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={rooms.includes(room)}
-                        onChange={() => toggleRoom(room)}
-                        className="h-4 w-4"
-                      />
-                      <span className="text-base font-medium text-foreground">{room}</span>
-                    </label>
-                  ))}
+              {quoteResult.add_on_line_items.length > 0 && (
+                <div>
+                  <h2 className="mb-2 text-lg font-semibold text-foreground">Add-ons Breakdown</h2>
+                  <div className="space-y-2">
+                    {quoteResult.add_on_line_items.map((item) => (
+                      <div key={item.name} className="flex items-center justify-between rounded-xl border border-border bg-background px-4 py-2 text-sm">
+                        <span>{item.name.replaceAll("_", " ")}</span>
+                        <span className="font-semibold">{formatINR(item.cost)}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {currentStep === 2 && (
-              <div>
-                <h1 className="mb-2 text-3xl font-bold text-foreground">Choose package</h1>
-                <p className="mb-6 text-muted-foreground">Select a package that fits your style and budget.</p>
-                <div className="space-y-3">
-                  {packageOptions.map((option) => (
-                    <label
-                      key={option}
-                      className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-background px-4 py-4"
-                    >
-                      <input
-                        type="radio"
-                        name="package"
-                        value={option}
-                        checked={selectedPackage === option}
-                        onChange={() => setSelectedPackage(option)}
-                        className="h-4 w-4"
-                      />
-                      <span className="text-base font-medium text-foreground">{option}</span>
-                    </label>
-                  ))}
+              {quoteResult.applied_rules.length > 0 && (
+                <div>
+                  <h2 className="mb-2 text-lg font-semibold text-foreground">Applied Rules</h2>
+                  <div className="space-y-2">
+                    {quoteResult.applied_rules.map((rule) => (
+                      <p key={rule} className="rounded-xl border border-border bg-background px-4 py-2 text-sm text-muted-foreground">
+                        {rule}
+                      </p>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {currentStep === 3 && (
-              <div>
-                <h1 className="mb-2 text-3xl font-bold text-foreground">Get quote</h1>
-                <p className="mb-6 text-muted-foreground">Share your details and we will contact you with estimate options.</p>
-                <div className="space-y-4">
-                  <input
-                    type="text"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    placeholder="Full name"
-                    className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none focus:border-primary"
-                  />
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Phone number"
-                    className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none focus:border-primary"
-                  />
-                  <input
-                    type="text"
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    placeholder="City"
-                    className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none focus:border-primary"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+              <p className="text-xs text-muted-foreground">{quoteResult.disclaimer}</p>
+            </div>
 
-          <div className="flex items-center justify-between border-t border-border px-6 py-5 md:px-10">
-            <button
-              type="button"
-              onClick={handleBack}
-              disabled={currentStep === 0}
-              className="text-sm font-semibold text-primary disabled:opacity-40"
-            >
-              BACK
-            </button>
-
-            {currentStep < steps.length - 1 ? (
+            <div className="flex justify-end border-t border-border px-6 py-5 md:px-10">
               <button
                 type="button"
-                onClick={handleNext}
-                disabled={!canProceed}
-                className="rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                onClick={() => {
+                  setQuoteResult(null);
+                  resetForm();
+                }}
+                className="rounded-full bg-primary px-6 py-2 text-sm font-semibold text-primary-foreground"
               >
-                NEXT
+                NEW ESTIMATE
               </button>
-            ) : (
-              <button
-                type="submit"
-                disabled={!canProceed || isSubmitting}
-                className="rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
-              >
-                {isSubmitting ? "SUBMITTING..." : "SUBMIT"}
-              </button>
-            )}
+            </div>
           </div>
-        </form>
+        ) : (
+          <form
+            onSubmit={handleSubmit}
+            className="mx-auto flex min-h-[65vh] w-full max-w-2xl flex-col rounded-3xl border border-border bg-card shadow-sm"
+          >
+            <div className="flex-1 px-6 py-8 md:px-10 md:py-10">
+              <p className="mb-2 text-sm font-medium text-primary">Estimate: {estimateType}</p>
+
+              {currentStep === 0 && (
+                <div>
+                  <h1 className="mb-2 text-3xl font-bold text-foreground">Select your BHK type</h1>
+                  <p className="mb-6 text-muted-foreground">Choose the home size to continue your estimate.</p>
+                  <div className="space-y-3">
+                    {bhkOptions.map((option) => (
+                      <label
+                        key={option}
+                        className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-background px-4 py-4"
+                      >
+                        <input
+                          type="radio"
+                          name="bhk"
+                          value={option}
+                          checked={bhkType === option}
+                          onChange={() => setBhkType(option)}
+                          className="h-4 w-4"
+                        />
+                        <span className="text-base font-medium text-foreground">{option}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 1 && (
+                <div>
+                  <h1 className="mb-2 text-3xl font-bold text-foreground">Rooms to design</h1>
+                  <p className="mb-6 text-muted-foreground">Pick all rooms you want us to include in the estimate.</p>
+                  <div className="space-y-3">
+                    {roomOptions.map((room) => (
+                      <label
+                        key={room}
+                        className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-background px-4 py-4"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={rooms.includes(room)}
+                          onChange={() => toggleRoom(room)}
+                          className="h-4 w-4"
+                        />
+                        <span className="text-base font-medium text-foreground">{room}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 2 && (
+                <div>
+                  <h1 className="mb-2 text-3xl font-bold text-foreground">Choose package</h1>
+                  <p className="mb-6 text-muted-foreground">Select a package that fits your style and budget.</p>
+                  <div className="space-y-3">
+                    {packageOptions.map((option) => (
+                      <label
+                        key={option}
+                        className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-background px-4 py-4"
+                      >
+                        <input
+                          type="radio"
+                          name="package"
+                          value={option}
+                          checked={selectedPackage === option}
+                          onChange={() => setSelectedPackage(option)}
+                          className="h-4 w-4"
+                        />
+                        <span className="text-base font-medium text-foreground">{option}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 3 && (
+                <div>
+                  <h1 className="mb-2 text-3xl font-bold text-foreground">Get quote</h1>
+                  <p className="mb-6 text-muted-foreground">Share your details and we will contact you with estimate options.</p>
+                  <div className="space-y-4">
+                    <input
+                      type="text"
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      placeholder="Full name"
+                      className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none focus:border-primary"
+                    />
+                    <input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="Phone number"
+                      className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none focus:border-primary"
+                    />
+                    <input
+                      type="text"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
+                      placeholder="City"
+                      className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none focus:border-primary"
+                    />
+                  </div>
+
+                  <div className="mt-6">
+                    <h2 className="mb-3 text-base font-semibold text-foreground">Optional Add-ons</h2>
+                    <div className="space-y-3">
+                      {addOnOptions.map((addOn) => (
+                        <label
+                          key={addOn.id}
+                          className="flex cursor-pointer items-center gap-3 rounded-xl border border-border bg-background px-4 py-3"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={addOns.includes(addOn.id)}
+                            onChange={() => toggleAddOn(addOn.id)}
+                            className="h-4 w-4"
+                          />
+                          <span className="text-sm font-medium text-foreground">{addOn.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between border-t border-border px-6 py-5 md:px-10">
+              <button
+                type="button"
+                onClick={handleBack}
+                disabled={currentStep === 0}
+                className="text-sm font-semibold text-primary disabled:opacity-40"
+              >
+                BACK
+              </button>
+
+              {currentStep < steps.length - 1 ? (
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  disabled={!canProceed}
+                  className="rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  NEXT
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={!canProceed || isSubmitting}
+                  className="rounded-full bg-primary px-8 py-3 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
+                >
+                  {isSubmitting ? "SUBMITTING..." : "SUBMIT"}
+                </button>
+              )}
+            </div>
+          </form>
+        )}
       </main>
     </div>
   );

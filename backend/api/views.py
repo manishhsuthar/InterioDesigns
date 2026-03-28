@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from .models import ContactLead, EstimateLead, FurnitureItem, InteriorPackage, LocationMultiplier, RenovationOption
-from .services import bootstrap_catalog, compute_estimate
+from .services import bootstrap_catalog, compute_estimate, compute_survey_quote
 
 User = get_user_model()
 
@@ -173,15 +173,24 @@ def estimate(request: HttpRequest) -> JsonResponse:
     if not package:
         return JsonResponse({"error": "invalid package_tier"}, status=404)
 
-    result = compute_estimate(
-        package=package,
-        area_sqft=area_sqft,
-        room_count=room_count,
-        selected_furniture=payload.get("selected_furniture", []),
-        selected_renovations=payload.get("selected_renovations", []),
-        city=payload.get("city", ""),
-        material_quality=payload.get("material_quality", "basic"),
-    )
+    if payload.get("request_source") == "estimate-survey":
+        result = compute_survey_quote(
+            bhk_type=payload.get("bhk_type", ""),
+            selected_rooms=payload.get("selected_rooms", []),
+            package_tier=payload.get("package_tier", "basic"),
+            estimate_type=payload.get("estimate_type", ""),
+            selected_add_ons=payload.get("add_ons", []),
+        )
+    else:
+        result = compute_estimate(
+            package=package,
+            area_sqft=area_sqft,
+            room_count=room_count,
+            selected_furniture=payload.get("selected_furniture", []),
+            selected_renovations=payload.get("selected_renovations", []),
+            city=payload.get("city", ""),
+            material_quality=payload.get("material_quality", "basic"),
+        )
 
     estimate_record = EstimateLead.objects.create(
         name=payload.get("name", "").strip(),
