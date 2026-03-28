@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 const estimates = [
   {
@@ -27,6 +28,9 @@ const EstimateSection = () => {
           className="text-center mb-10"
         >
           <p className="text-muted-foreground text-lg md:text-xl mb-2">Get the estimate for your</p>
+          <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
+            Calculate the approximate cost of doing up your home interiors
+          </p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
@@ -41,19 +45,14 @@ const EstimateSection = () => {
             >
               <h3 className="font-serif text-2xl font-semibold text-foreground mb-3">{item.title}</h3>
               <p className="text-muted-foreground mb-6 min-h-[48px]">{item.description}</p>
-              <button
-                type="button"
+              <Link
+                to={`/estimate-survey?type=${encodeURIComponent(item.title)}`}
                 className="inline-flex items-center gap-2 text-primary font-semibold hover:opacity-80 transition-opacity"
               >
                 Calculate Estimate
-              </button>
-              
+              </Link>
             </motion.div>
-            
           ))}
-          <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto  mt-8 ">
-            Calculate the approximate cost of doing up your home interiors
-          </p>
         </div>
       </div>
     </section>
