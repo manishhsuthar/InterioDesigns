@@ -1,8 +1,8 @@
 import { FormEvent, useMemo, useState } from "react";
+import { Heart, LayoutGrid, UserRound } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { apiUrl } from "@/lib/api";
 import categoryResidential from "@/assets/category-residential.jpg";
 import categoryCommercial from "@/assets/category-commercial.jpg";
 import categoryOffice from "@/assets/category-office.jpg";
@@ -21,42 +21,52 @@ type StoredUser = {
   email?: string;
 };
 
-type CatalogItem = {
-  id: string;
+type CategoryId = "residential" | "commercial" | "office" | "outdoor";
+type DashboardTab = "explore" | "profile" | "wishlist";
+
+type CategoryCard = {
+  id: CategoryId;
   title: string;
-  category: string;
-  image: string;
+  cover: string;
 };
 
-const allCatalogs: CatalogItem[] = [
-  { id: "residential", title: "Residential", category: "Category", image: categoryResidential },
-  { id: "commercial", title: "Commercial", category: "Category", image: categoryCommercial },
-  { id: "office", title: "Office", category: "Category", image: categoryOffice },
-  { id: "outdoor", title: "Outdoor", category: "Category", image: categoryOutdoor },
-  { id: "featured-1", title: "Featured One", category: "Featured", image: featured1 },
-  { id: "featured-2", title: "Featured Two", category: "Featured", image: featured2 },
-  { id: "gallery-1", title: "Modern Living Room", category: "Gallery", image: gallery1 },
-  { id: "gallery-2", title: "Open Kitchen & Dining", category: "Gallery", image: gallery2 },
-  { id: "gallery-3", title: "Accent Seating Space", category: "Gallery", image: gallery3 },
-  { id: "gallery-4", title: "Scandinavian Bedroom", category: "Gallery", image: gallery4 },
-  { id: "gallery-5", title: "Luxury Ambient Living", category: "Gallery", image: gallery5 },
-  { id: "gallery-6", title: "Contemporary Dining", category: "Gallery", image: gallery6 },
+type CatalogImage = {
+  id: string;
+  title: string;
+  src: string;
+};
+
+const categoryCards: CategoryCard[] = [
+  { id: "residential", title: "Residential", cover: categoryResidential },
+  { id: "commercial", title: "Commercial", cover: categoryCommercial },
+  { id: "office", title: "Office", cover: categoryOffice },
+  { id: "outdoor", title: "Outdoor", cover: categoryOutdoor },
 ];
 
-const estimateOptions = [
-  {
-    title: "Full Home Interior",
-    description: "Get a complete estimate for your entire home interior.",
-  },
-  {
-    title: "Kitchen",
-    description: "Estimate modular kitchen and utility area costs.",
-  },
-  {
-    title: "Wardrobe",
-    description: "Estimate custom wardrobe design and execution costs.",
-  },
-];
+const imagesByCategory: Record<CategoryId, CatalogImage[]> = {
+  residential: [
+    { id: "residential-1", title: "Modern Living Room", src: gallery1 },
+    { id: "residential-2", title: "Open Kitchen and Dining", src: gallery2 },
+    { id: "residential-3", title: "Scandinavian Bedroom", src: gallery4 },
+    { id: "residential-4", title: "Luxury Ambient Lounge", src: gallery5 },
+    { id: "residential-5", title: "Featured Residence One", src: featured1 },
+  ],
+  commercial: [
+    { id: "commercial-1", title: "Client Lounge", src: gallery3 },
+    { id: "commercial-2", title: "Contemporary Dining Space", src: gallery6 },
+    { id: "commercial-3", title: "Signature Commercial Concept", src: featured2 },
+  ],
+  office: [
+    { id: "office-1", title: "Focused Work Bay", src: gallery3 },
+    { id: "office-2", title: "Collaborative Meeting Area", src: gallery2 },
+    { id: "office-3", title: "Executive Office", src: featured1 },
+  ],
+  outdoor: [
+    { id: "outdoor-1", title: "Open Patio Concept", src: categoryOutdoor },
+    { id: "outdoor-2", title: "Outdoor Seating Retreat", src: gallery6 },
+    { id: "outdoor-3", title: "Landscape Lighting Ambience", src: featured2 },
+  ],
+};
 
 function parseStoredJson<T>(value: string | null): T | null {
   if (!value) return null;
@@ -72,30 +82,28 @@ const Dashboard = () => {
 
   const [user, setUser] = useState<StoredUser | null>(() => {
     const parsed = parseStoredJson<StoredUser>(localStorage.getItem("interio_user"));
-    if (!parsed) {
-      localStorage.removeItem("interio_user");
-    }
+    if (!parsed) localStorage.removeItem("interio_user");
     return parsed;
   });
 
-  const [profileName, setProfileName] = useState(user?.name ?? "");
-  const [profileEmail, setProfileEmail] = useState(user?.email ?? "");
-  const [consultName, setConsultName] = useState(user?.name ?? "");
-  const [consultEmail, setConsultEmail] = useState(user?.email ?? "");
-  const [consultPhone, setConsultPhone] = useState("");
-  const [consultDate, setConsultDate] = useState("");
-  const [consultationMode, setConsultationMode] = useState("Virtual");
-  const [consultNotes, setConsultNotes] = useState("");
-  const [isBooking, setIsBooking] = useState(false);
+  const [activeTab, setActiveTab] = useState<DashboardTab>("explore");
   const [wishlistIds, setWishlistIds] = useState<string[]>(() => {
     const parsed = parseStoredJson<string[]>(localStorage.getItem("interio_wishlist_catalogs"));
     if (!parsed || !Array.isArray(parsed)) return [];
     return parsed;
   });
 
-  const wishlistCatalogs = useMemo(
-    () => allCatalogs.filter((item) => wishlistIds.includes(item.id)),
-    [wishlistIds]
+  const [profileName, setProfileName] = useState(user?.name ?? "");
+  const [profileEmail, setProfileEmail] = useState(user?.email ?? "");
+
+  const allImages = useMemo(
+    () => Object.values(imagesByCategory).flat(),
+    []
+  );
+
+  const wishlistImages = useMemo(
+    () => allImages.filter((image) => wishlistIds.includes(image.id)),
+    [allImages, wishlistIds]
   );
 
   const persistWishlist = (nextWishlist: string[]) => {
@@ -103,15 +111,13 @@ const Dashboard = () => {
     localStorage.setItem("interio_wishlist_catalogs", JSON.stringify(nextWishlist));
   };
 
-  const toggleWishlist = (catalogId: string) => {
-    const exists = wishlistIds.includes(catalogId);
-    const next = exists ? wishlistIds.filter((id) => id !== catalogId) : [...wishlistIds, catalogId];
+  const toggleWishlist = (imageId: string) => {
+    const exists = wishlistIds.includes(imageId);
+    const next = exists ? wishlistIds.filter((id) => id !== imageId) : [...wishlistIds, imageId];
     persistWishlist(next);
     toast({
       title: exists ? "Removed from wishlist" : "Added to wishlist",
-      description: exists
-        ? "Catalog image removed from your wishlist."
-        : "Catalog image saved to your wishlist.",
+      description: exists ? "Image removed from your wishlist." : "Image saved to your wishlist.",
     });
   };
 
@@ -122,63 +128,8 @@ const Dashboard = () => {
     localStorage.setItem("interio_user", JSON.stringify(nextUser));
     toast({
       title: "Profile updated",
-      description: "Your dashboard profile details have been saved.",
+      description: "Your profile details were saved.",
     });
-  };
-
-  const handleBookConsultation = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!consultName.trim() || !consultEmail.trim() || !consultPhone.trim() || !consultDate) {
-      toast({
-        title: "Missing details",
-        description: "Please fill all consultation details before booking.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setIsBooking(true);
-    try {
-      const message = [
-        "Consultation Booking Request",
-        `Mode: ${consultationMode}`,
-        `Phone: ${consultPhone.trim()}`,
-        `Preferred Date: ${consultDate}`,
-        `Notes: ${consultNotes.trim() || "N/A"}`,
-      ].join(" | ");
-
-      const response = await fetch(apiUrl("/contact/"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: consultName.trim(),
-          email: consultEmail.trim(),
-          message,
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Unable to book consultation");
-      }
-
-      toast({
-        title: "Consultation booked",
-        description: "Your request has been sent. Our team will contact you soon.",
-      });
-      setConsultPhone("");
-      setConsultDate("");
-      setConsultNotes("");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to book consultation right now.";
-      toast({
-        title: "Booking failed",
-        description: message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsBooking(false);
-    }
   };
 
   const handleLogout = () => {
@@ -204,15 +155,12 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background px-4 py-8 md:px-8 md:py-10">
       <div className="mx-auto max-w-7xl space-y-8">
         <section className="glass-form rounded-3xl p-6 md:p-8">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm uppercase tracking-wide text-foreground/60">Dashboard</p>
               <h1 className="font-serif text-3xl md:text-4xl font-bold text-foreground">
                 Welcome{user.name ? `, ${user.name}` : ""}
               </h1>
-              <p className="mt-2 text-foreground/70">
-                Explore catalogs, calculate estimates, manage wishlist, and book consultations.
-              </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button asChild className="rounded-3xl bg-foreground text-background hover:bg-foreground/90">
@@ -223,70 +171,79 @@ const Dashboard = () => {
               </Button>
             </div>
           </div>
+
+          <div className="mt-6 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setActiveTab("explore")}
+              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors ${
+                activeTab === "explore"
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-background text-foreground"
+              }`}
+            >
+              <LayoutGrid className="h-4 w-4" />
+              Explore
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("profile")}
+              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors ${
+                activeTab === "profile"
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-background text-foreground"
+              }`}
+            >
+              <UserRound className="h-4 w-4" />
+              Profile
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("wishlist")}
+              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors ${
+                activeTab === "wishlist"
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-background text-foreground"
+              }`}
+            >
+              <Heart className="h-4 w-4" />
+              Wishlist
+            </button>
+          </div>
         </section>
 
-        <section className="rounded-3xl border border-border bg-card p-6 md:p-8">
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <h2 className="font-serif text-2xl font-semibold text-foreground">Explore Catalogs</h2>
-            <p className="text-sm text-muted-foreground">{allCatalogs.length} items</p>
-          </div>
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {allCatalogs.map((catalog) => {
-              const wishlisted = wishlistIds.includes(catalog.id);
-              return (
-                <article key={catalog.id} className="overflow-hidden rounded-2xl border border-border bg-background">
-                  <div className="aspect-square overflow-hidden">
-                    <img
-                      src={catalog.image}
-                      alt={catalog.title}
-                      className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
-                    />
-                  </div>
-                  <div className="space-y-2 p-3">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">{catalog.category}</p>
-                    <h3 className="line-clamp-1 font-semibold text-foreground">{catalog.title}</h3>
-                    <Button
-                      type="button"
-                      onClick={() => toggleWishlist(catalog.id)}
-                      className={`w-full rounded-2xl ${
-                        wishlisted
-                          ? "bg-primary/15 text-primary hover:bg-primary/20"
-                          : "bg-terracotta text-terracotta-foreground hover:bg-terracotta/90"
-                      }`}
-                    >
-                      {wishlisted ? "Saved in Wishlist" : "Save to Wishlist"}
-                    </Button>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="rounded-3xl border border-border bg-card p-6 md:p-8">
-          <h2 className="mb-5 font-serif text-2xl font-semibold text-foreground">Estimate Feature</h2>
-          <div className="grid gap-4 md:grid-cols-3">
-            {estimateOptions.map((option) => (
-              <article key={option.title} className="rounded-2xl border border-border bg-background p-5">
-                <h3 className="font-serif text-xl font-semibold text-foreground">{option.title}</h3>
-                <p className="mt-2 min-h-[48px] text-sm text-muted-foreground">{option.description}</p>
-                <Button
-                  asChild
-                  className="mt-4 w-full rounded-2xl bg-foreground text-background hover:bg-foreground/90"
-                >
-                  <Link to={`/estimate-survey?type=${encodeURIComponent(option.title)}`}>
-                    Calculate Estimate
+        {activeTab === "explore" && (
+          <section>
+            <article className="rounded-3xl border border-border bg-card p-6 md:p-8">
+              <h2 className="mb-5 font-serif text-2xl font-semibold text-foreground">Explore Catalogs</h2>
+              <div className="grid grid-cols-2 justify-items-center gap-4 md:grid-cols-4">
+                {categoryCards.map((category) => (
+                  <Link
+                    key={category.id}
+                    to={`/dashboard/catalog/${category.id}`}
+                    className="w-full max-w-[210px] overflow-hidden rounded-2xl border border-border text-left transition-all hover:border-primary/60"
+                  >
+                    <div className="aspect-[3/4] overflow-hidden">
+                      <img
+                        src={category.cover}
+                        alt={category.title}
+                        className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                      />
+                    </div>
+                    <div className="p-2.5">
+                      <h3 className="text-sm font-semibold text-foreground">{category.title}</h3>
+                    </div>
                   </Link>
-                </Button>
-              </article>
-            ))}
-          </div>
-        </section>
+                ))}
+              </div>
+            </article>
+          </section>
+        )}
 
-        <section className="grid gap-6 lg:grid-cols-2">
-          <article className="rounded-3xl border border-border bg-card p-6 md:p-8">
+        {activeTab === "profile" && (
+          <section className="rounded-3xl border border-border bg-card p-6 md:p-8">
             <h2 className="mb-4 font-serif text-2xl font-semibold text-foreground">Profile</h2>
-            <form onSubmit={handleProfileSave} className="space-y-4">
+            <form onSubmit={handleProfileSave} className="max-w-xl space-y-4">
               <input
                 type="text"
                 value={profileName}
@@ -303,107 +260,50 @@ const Dashboard = () => {
                 className="input-cream w-full"
                 required
               />
-              <Button type="submit" className="w-full rounded-3xl bg-terracotta hover:bg-terracotta/90 text-terracotta-foreground">
+              <Button type="submit" className="rounded-3xl bg-terracotta hover:bg-terracotta/90 text-terracotta-foreground">
                 Save Profile
               </Button>
             </form>
-          </article>
+          </section>
+        )}
 
-          <article className="rounded-3xl border border-border bg-card p-6 md:p-8">
-            <h2 className="mb-4 font-serif text-2xl font-semibold text-foreground">Book Consultation</h2>
-            <form onSubmit={handleBookConsultation} className="space-y-4">
-              <input
-                type="text"
-                value={consultName}
-                onChange={(event) => setConsultName(event.target.value)}
-                placeholder="Full name"
-                className="input-cream w-full"
-                required
-              />
-              <input
-                type="email"
-                value={consultEmail}
-                onChange={(event) => setConsultEmail(event.target.value)}
-                placeholder="Email address"
-                className="input-cream w-full"
-                required
-              />
-              <input
-                type="tel"
-                value={consultPhone}
-                onChange={(event) => setConsultPhone(event.target.value)}
-                placeholder="Phone number"
-                className="input-cream w-full"
-                required
-              />
-              <input
-                type="date"
-                value={consultDate}
-                onChange={(event) => setConsultDate(event.target.value)}
-                className="input-cream w-full"
-                required
-              />
-              <select
-                value={consultationMode}
-                onChange={(event) => setConsultationMode(event.target.value)}
-                className="input-cream w-full"
-              >
-                <option>Virtual</option>
-                <option>In-Person</option>
-                <option>Phone Call</option>
-              </select>
-              <textarea
-                value={consultNotes}
-                onChange={(event) => setConsultNotes(event.target.value)}
-                placeholder="Share project details"
-                className="input-cream min-h-[90px] w-full"
-              />
-              <Button
-                type="submit"
-                disabled={isBooking}
-                className="w-full rounded-3xl bg-primary text-primary-foreground hover:bg-primary/90"
-              >
-                {isBooking ? "Booking..." : "Book Consultation"}
-              </Button>
-            </form>
-          </article>
-        </section>
-
-        <section className="rounded-3xl border border-border bg-card p-6 md:p-8">
-          <div className="mb-5 flex items-center justify-between gap-4">
-            <h2 className="font-serif text-2xl font-semibold text-foreground">Wishlist</h2>
-            <p className="text-sm text-muted-foreground">{wishlistCatalogs.length} saved</p>
-          </div>
-
-          {wishlistCatalogs.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border bg-background p-8 text-center">
-              <p className="text-muted-foreground">
-                No catalog images saved yet. Add items from Explore Catalogs above.
-              </p>
+        {activeTab === "wishlist" && (
+          <section className="rounded-3xl border border-border bg-card p-6 md:p-8">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <h2 className="font-serif text-2xl font-semibold text-foreground">Wishlist</h2>
+              <p className="text-sm text-muted-foreground">{wishlistImages.length} saved</p>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-              {wishlistCatalogs.map((catalog) => (
-                <article key={catalog.id} className="overflow-hidden rounded-2xl border border-border bg-background">
-                  <div className="aspect-square overflow-hidden">
-                    <img src={catalog.image} alt={catalog.title} className="h-full w-full object-cover" />
-                  </div>
-                  <div className="space-y-2 p-3">
-                    <h3 className="line-clamp-1 text-sm font-semibold text-foreground">{catalog.title}</h3>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => toggleWishlist(catalog.id)}
-                      className="w-full rounded-2xl"
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </section>
+
+            {wishlistImages.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border bg-background p-8 text-center">
+                <p className="text-muted-foreground">
+                  No images saved yet. Open Explore and tap the heart icon on any catalog image.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+                {wishlistImages.map((image) => (
+                  <article key={image.id} className="overflow-hidden rounded-2xl border border-border bg-background">
+                    <div className="relative aspect-square overflow-hidden">
+                      <img src={image.src} alt={image.title} className="h-full w-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => toggleWishlist(image.id)}
+                        className="absolute right-3 top-3 rounded-full bg-card/80 p-2 text-rose-500 backdrop-blur-sm"
+                        aria-label="Remove from wishlist"
+                      >
+                        <Heart className="h-4 w-4 fill-rose-500 text-rose-500" />
+                      </button>
+                    </div>
+                    <div className="p-3">
+                      <h3 className="line-clamp-1 text-sm font-semibold text-foreground">{image.title}</h3>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
       </div>
     </div>
   );
