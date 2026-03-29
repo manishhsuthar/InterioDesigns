@@ -28,9 +28,6 @@ const EstimateSection = () => {
           className="text-center mb-10"
         >
           <p className="text-muted-foreground text-lg md:text-xl mb-2">Get the estimate for your</p>
-          <p className="text-muted-foreground text-base md:text-lg max-w-2xl mx-auto">
-            Calculate the approximate cost of doing up your home interiors
-          </p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">

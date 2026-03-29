@@ -50,7 +50,7 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
           >
-            <a href="#explore">
+            <a href="signup" className="inline-block">
               <Button
                 variant="default"
                 size="lg"
