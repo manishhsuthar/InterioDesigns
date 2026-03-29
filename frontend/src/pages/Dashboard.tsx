@@ -1,8 +1,9 @@
 import { FormEvent, useMemo, useState } from "react";
-import { Heart, LayoutGrid, UserRound } from "lucide-react";
+import { Heart, Search, UserRound } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
+import InterioLogo from "@/components/ui/InterioLogo";
 import categoryResidential from "@/assets/category-residential.jpg";
 import categoryCommercial from "@/assets/category-commercial.jpg";
 import categoryOffice from "@/assets/category-office.jpg";
@@ -95,6 +96,7 @@ const Dashboard = () => {
 
   const [profileName, setProfileName] = useState(user?.name ?? "");
   const [profileEmail, setProfileEmail] = useState(user?.email ?? "");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const allImages = useMemo(
     () => Object.values(imagesByCategory).flat(),
@@ -105,6 +107,12 @@ const Dashboard = () => {
     () => allImages.filter((image) => wishlistIds.includes(image.id)),
     [allImages, wishlistIds]
   );
+
+  const filteredCategoryCards = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return categoryCards;
+    return categoryCards.filter((item) => item.title.toLowerCase().includes(query));
+  }, [searchQuery]);
 
   const persistWishlist = (nextWishlist: string[]) => {
     setWishlistIds(nextWishlist);
@@ -154,61 +162,52 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background px-4 py-8 md:px-8 md:py-10">
       <div className="mx-auto max-w-7xl space-y-8">
-        <section className="glass-form rounded-3xl p-6 md:p-8">
-          <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-wide text-foreground/60">Dashboard</p>
-              <h1 className="font-serif text-3xl md:text-4xl font-bold text-foreground">
-                Welcome{user.name ? `, ${user.name}` : ""}
-              </h1>
-            </div>
-            <div className="flex flex-wrap gap-3">
-              <Button asChild className="rounded-3xl bg-foreground text-background hover:bg-foreground/90">
-                <Link to="/">Go to Home</Link>
-              </Button>
-              <Button type="button" variant="outline" onClick={handleLogout} className="rounded-3xl">
-                Logout
-              </Button>
-            </div>
-          </div>
+        <section className="glass-nav rounded-full px-4 py-3 md:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Link to="/">
+              <InterioLogo />
+            </Link>
 
-          <div className="mt-6 flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setActiveTab("explore")}
-              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors ${
-                activeTab === "explore"
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border bg-background text-foreground"
-              }`}
-            >
-              <LayoutGrid className="h-4 w-4" />
-              Explore
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("profile")}
-              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors ${
-                activeTab === "profile"
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border bg-background text-foreground"
-              }`}
-            >
-              <UserRound className="h-4 w-4" />
-              Profile
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("wishlist")}
-              className={`flex items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors ${
-                activeTab === "wishlist"
-                  ? "border-foreground bg-foreground text-background"
-                  : "border-border bg-background text-foreground"
-              }`}
-            >
-              <Heart className="h-4 w-4" />
-              Wishlist
-            </button>
+            <div className="flex items-center gap-2 md:gap-3">
+              <label className="flex items-center gap-2 rounded-full border border-border bg-background px-3 py-2">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search"
+                  className="w-24 bg-transparent text-sm outline-none md:w-40"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => setActiveTab("explore")}
+                className={`rounded-full px-4 py-2 text-sm transition-colors ${
+                  activeTab === "explore" ? "bg-foreground text-background" : "text-foreground/70 hover:text-foreground"
+                }`}
+              >
+                Explore
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("wishlist")}
+                className={`rounded-full px-4 py-2 text-sm transition-colors ${
+                  activeTab === "wishlist" ? "bg-foreground text-background" : "text-foreground/70 hover:text-foreground"
+                }`}
+              >
+                Wishlist
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("profile")}
+                className={`rounded-full p-2 transition-colors ${
+                  activeTab === "profile" ? "bg-foreground text-background" : "text-foreground/80 hover:bg-muted"
+                }`}
+                aria-label="Profile"
+              >
+                <UserRound className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </section>
 
@@ -217,7 +216,7 @@ const Dashboard = () => {
             <article className="rounded-3xl border border-border bg-card p-6 md:p-8">
               <h2 className="mb-5 font-serif text-2xl font-semibold text-foreground">Explore Catalogs</h2>
               <div className="grid grid-cols-2 justify-items-center gap-4 md:grid-cols-4">
-                {categoryCards.map((category) => (
+                {filteredCategoryCards.map((category) => (
                   <Link
                     key={category.id}
                     to={`/dashboard/catalog/${category.id}`}
@@ -236,6 +235,9 @@ const Dashboard = () => {
                   </Link>
                 ))}
               </div>
+              {filteredCategoryCards.length === 0 ? (
+                <p className="mt-4 text-sm text-muted-foreground">No category found for that search.</p>
+              ) : null}
             </article>
           </section>
         )}
@@ -262,6 +264,9 @@ const Dashboard = () => {
               />
               <Button type="submit" className="rounded-3xl bg-terracotta hover:bg-terracotta/90 text-terracotta-foreground">
                 Save Profile
+              </Button>
+              <Button type="button" variant="outline" onClick={handleLogout} className="rounded-3xl">
+                Logout
               </Button>
             </form>
           </section>
