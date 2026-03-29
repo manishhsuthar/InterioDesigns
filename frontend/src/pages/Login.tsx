@@ -41,7 +41,7 @@ const Login = () => {
         title: "Login successful",
         description: `Welcome back${data.user?.name ? `, ${data.user.name}` : ""}.`,
       });
-      navigate("/");
+      navigate("/dashboard");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to login right now.";
       toast({

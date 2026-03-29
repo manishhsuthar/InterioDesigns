@@ -45,11 +45,12 @@ const Signup = () => {
         throw new Error(data.error || "Signup failed");
       }
 
+      localStorage.setItem("interio_user", JSON.stringify(data.user));
       toast({
         title: "Account created",
-        description: "You can now log in with your new account.",
+        description: `Welcome${data.user?.name ? `, ${data.user.name}` : ""}.`,
       });
-      navigate("/login");
+      navigate("/dashboard");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to create account right now.";
       toast({
