@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 const TOTAL_FRAMES = 128;
 
@@ -17,23 +18,23 @@ const hotspots: Hotspot[] = [
     id: "sofa",
     label: "Sofa",
     title: "Textured Linen Sofa",
-    detail: "Breathable linen blend with high-density cushions and low-profile Scandinavian geometry.",
+    detail: "Breathable linen blend with high-density cushions and refined Scandinavian proportions.",
     x: 32,
     y: 67,
   },
   {
     id: "table",
     label: "Coffee Table",
-    title: "CNC Craft Coffee Table",
-    detail: "Precision-cut oak veneer top with matte sealing and hand-finished chamfered edges.",
+    title: "CNC Oak Coffee Table",
+    detail: "Precision-milled form with matte-protected wood grain and hand-finished contour edges.",
     x: 49,
     y: 72,
   },
   {
     id: "tv",
     label: "TV Unit",
-    title: "Integrated Media Console",
-    detail: "Hidden cable channels, push-latch storage, and layered shelving for calm visual rhythm.",
+    title: "Integrated TV Console",
+    detail: "Hidden storage channels and push-open cabinetry for calm, clutter-free visual composition.",
     x: 72,
     y: 58,
   },
@@ -72,9 +73,9 @@ const DayNightStudioSection = () => {
   const rafRef = useRef<number | null>(null);
   const lastUiFrameRef = useRef(0);
 
-  const [frameLoadCount, setFrameLoadCount] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [activeHotspot, setActiveHotspot] = useState<string>("sofa");
+  const [frameLoadCount, setFrameLoadCount] = useState(0);
+  const [activeHotspot, setActiveHotspot] = useState("sofa");
 
   const frameUrls = useMemo(
     () => Array.from({ length: TOTAL_FRAMES }, (_, idx) => getFrameUrl(idx)),
@@ -85,10 +86,7 @@ const DayNightStudioSection = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const frameIndex = Math.min(
-      TOTAL_FRAMES - 1,
-      Math.max(0, Math.round(value * (TOTAL_FRAMES - 1))),
-    );
+    const frameIndex = Math.min(TOTAL_FRAMES - 1, Math.max(0, Math.round(value * (TOTAL_FRAMES - 1))));
     const frame = framesRef.current[frameIndex];
     if (!frame || !frame.complete) return;
 
@@ -132,17 +130,14 @@ const DayNightStudioSection = () => {
         if (cancelled) return;
         framesRef.current[index] = image;
         setFrameLoadCount((count) => count + 1);
-
         if (index === 0 || Math.abs(index - Math.round(smoothProgressRef.current * (TOTAL_FRAMES - 1))) <= 1) {
           drawFrameFromProgress(smoothProgressRef.current);
         }
       };
     };
 
-    // Load first frame immediately so there is no blank state.
     loadFrame(0);
 
-    // Progressive loading in small batches to avoid main-thread spikes.
     let index = 1;
     const batchSize = 8;
 
@@ -152,7 +147,6 @@ const DayNightStudioSection = () => {
         loadFrame(index);
         index += 1;
       }
-
       if (index < TOTAL_FRAMES) {
         window.setTimeout(loadBatch, 45);
       }
@@ -167,11 +161,11 @@ const DayNightStudioSection = () => {
 
   useEffect(() => {
     const updateTarget = () => {
-      const wrapper = sectionRef.current;
-      if (!wrapper) return;
+      const section = sectionRef.current;
+      if (!section) return;
 
-      const rect = wrapper.getBoundingClientRect();
-      const totalScrollable = Math.max(1, wrapper.offsetHeight - window.innerHeight);
+      const rect = section.getBoundingClientRect();
+      const totalScrollable = Math.max(1, section.offsetHeight - window.innerHeight);
       const traveled = Math.min(Math.max(-rect.top, 0), totalScrollable);
       targetProgressRef.current = traveled / totalScrollable;
 
@@ -206,176 +200,115 @@ const DayNightStudioSection = () => {
     return () => {
       window.removeEventListener("scroll", updateTarget);
       window.removeEventListener("resize", updateTarget);
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
   }, []);
 
   const activeCard = hotspots.find((spot) => spot.id === activeHotspot) ?? hotspots[0];
   const moodOpacity = Math.min(0.8, progress * 0.95);
-  const dayTint = Math.max(0.08, 0.22 - progress * 0.2);
+  const dayTint = Math.max(0.07, 0.2 - progress * 0.18);
 
   return (
-    <section
-      aria-label="Living room day to night transformation"
-      className="relative overflow-hidden py-24 md:py-28"
-      style={{
-        background: `linear-gradient(180deg, rgba(245,241,237,1) 0%, rgba(237,231,227,1) ${40 - progress * 8}%, rgba(45,31,26,${progress * 0.5}) 100%)`,
-      }}
-    >
-      <div className="pointer-events-none absolute inset-0 opacity-40" style={{
-        backgroundImage:
-          "radial-gradient(circle at 15% 20%, rgba(255,255,255,0.45) 0%, transparent 38%), radial-gradient(circle at 85% 30%, rgba(202,149,108,0.22) 0%, transparent 44%)",
-      }} />
+    <section ref={sectionRef} className="relative h-[230vh]">
+      <div className="sticky top-0 h-screen overflow-hidden bg-[#efe8e2]">
+        <canvas ref={canvasRef} className="absolute inset-0 h-full w-full" aria-label="Day to night room animation" />
 
-      <div className="relative mx-auto max-w-6xl px-6">
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: `linear-gradient(180deg, rgba(255,247,236,${dayTint}) 0%, rgba(255,211,166,${dayTint * 0.6}) 35%, rgba(26,15,10,${moodOpacity}) 100%)`,
+          }}
+        />
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ boxShadow: `inset 0 0 220px rgba(0,0,0,${progress * 0.45})` }}
+        />
+
+        {hotspots.map((spot) => {
+          const isActive = activeHotspot === spot.id;
+          return (
+            <button
+              key={spot.id}
+              className="absolute z-30 -translate-x-1/2 -translate-y-1/2"
+              style={{ left: `${spot.x}%`, top: `${spot.y}%`, opacity: progress > 0.03 ? 1 : 0 }}
+              onMouseEnter={() => setActiveHotspot(spot.id)}
+              onFocus={() => setActiveHotspot(spot.id)}
+              onClick={() => setActiveHotspot(spot.id)}
+              aria-label={`Hotspot ${spot.label}`}
+            >
+              <span
+                className={`flex h-9 min-w-9 items-center justify-center rounded-full border px-3 text-[11px] font-medium tracking-wide transition-all duration-300 ${
+                  isActive
+                    ? "border-white/90 bg-white text-[#3c2922] shadow-[0_0_0_10px_rgba(255,255,255,0.2)]"
+                    : "border-white/60 bg-black/25 text-white backdrop-blur-sm hover:bg-black/40"
+                }`}
+              >
+                {spot.label}
+              </span>
+            </button>
+          );
+        })}
+
         <motion.div
-          initial={{ opacity: 0, y: 32 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.35 }}
-          transition={{ duration: 0.8 }}
-          className="max-w-3xl"
+          key={activeCard.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          className="absolute bottom-8 right-6 z-30 w-[min(360px,calc(100%-3rem))] rounded-2xl border border-white/40 bg-white/85 p-4 shadow-xl backdrop-blur-md"
         >
-          <p className="text-sm uppercase tracking-[0.28em] text-primary/80">Light Narrative</p>
-          <h2 className="mt-3 text-4xl font-semibold leading-tight md:text-5xl">
-            Scroll Through A Living Room That Shifts From Daylight To Warm Night
-          </h2>
-          <p className="mt-5 max-w-2xl text-base leading-relaxed text-foreground/70 md:text-lg">
-            The composition stays still while atmosphere evolves. Follow the light transition to feel how texture,
-            depth, and emotion transform the same interior canvas.
-          </p>
+          <p className="text-xs uppercase tracking-[0.22em] text-primary/80">Interactive Detail</p>
+          <h3 className="mt-2 text-lg font-semibold text-foreground">{activeCard.title}</h3>
+          <p className="mt-2 text-sm leading-relaxed text-foreground/70">{activeCard.detail}</p>
         </motion.div>
-      </div>
 
-      <div ref={sectionRef} className="relative mt-14 h-[260vh]">
-        <div className="sticky top-24">
-          <div className="mx-auto max-w-6xl px-6">
-            <div className="relative overflow-hidden rounded-[2rem] border border-white/40 bg-[#f7f2ec]/75 shadow-[0_30px_80px_rgba(48,32,25,0.18)] backdrop-blur-sm">
-              <div className="relative aspect-[16/9]">
-                <canvas
-                  ref={canvasRef}
-                  className="absolute inset-0 h-full w-full"
-                  aria-label="Day to night interior canvas animation"
-                />
+        <div className="absolute inset-0 z-10 px-6 pb-10 pt-24 md:px-12 lg:px-20">
+          <div className="flex h-full items-center">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="glass-hero relative max-w-lg rounded-3xl p-8 md:p-12"
+            >
+              <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full border-2 border-white/35" />
 
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={{
-                    background: `linear-gradient(180deg, rgba(255,245,232,${dayTint}) 0%, rgba(255,207,154,${dayTint * 0.65}) 32%, rgba(32,18,12,${moodOpacity}) 100%)`,
-                  }}
-                />
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={{
-                    boxShadow: `inset 0 0 180px rgba(0,0,0,${progress * 0.42})`,
-                  }}
-                />
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                className="font-serif text-5xl font-bold tracking-tight text-foreground md:text-6xl lg:text-7xl"
+              >
+                REDEFINE
+              </motion.h1>
 
-                <div className="pointer-events-none absolute left-6 top-6 rounded-full bg-white/70 px-4 py-2 text-xs font-medium uppercase tracking-[0.22em] text-foreground/70 backdrop-blur-sm">
-                  Day / Night Progress {(progress * 100).toFixed(0)}%
-                </div>
-                <div className="pointer-events-none absolute bottom-6 left-6 rounded-xl bg-black/25 px-4 py-2 text-xs tracking-wide text-white/90 backdrop-blur-sm">
-                  Frames Loaded: {frameLoadCount}/{TOTAL_FRAMES}
-                </div>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.5 }}
+                className="mb-8 mt-4 text-lg font-light leading-relaxed text-foreground/80 md:text-xl"
+              >
+                Your Home With Modern Design
+                <br />
+                And Timeless Furniture
+              </motion.p>
 
-                {hotspots.map((spot, index) => {
-                  const isActive = activeHotspot === spot.id;
-                  return (
-                    <motion.button
-                      key={spot.id}
-                      initial={{ opacity: 0, scale: 0.6 }}
-                      animate={{
-                        opacity: progress > 0.2 ? 1 : 0,
-                        scale: progress > 0.2 ? 1 : 0.72,
-                      }}
-                      transition={{ duration: 0.45, delay: index * 0.08 }}
-                      className="absolute z-20 -translate-x-1/2 -translate-y-1/2"
-                      style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
-                      onMouseEnter={() => setActiveHotspot(spot.id)}
-                      onFocus={() => setActiveHotspot(spot.id)}
-                      onClick={() => setActiveHotspot(spot.id)}
-                      aria-label={`Hotspot ${spot.label}`}
-                    >
-                      <span
-                        className={`flex h-9 min-w-9 items-center justify-center rounded-full border text-[11px] font-medium tracking-wide transition-all duration-300 ${
-                          isActive
-                            ? "border-white/90 bg-white text-[#3d2922] shadow-[0_0_0_8px_rgba(255,255,255,0.22)]"
-                            : "border-white/60 bg-white/18 text-white backdrop-blur-sm hover:bg-white/30"
-                        }`}
-                      >
-                        {spot.label}
-                      </span>
-                    </motion.button>
-                  );
-                })}
-
-                <motion.div
-                  key={activeCard.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: progress > 0.2 ? 1 : 0, y: progress > 0.2 ? 0 : 12 }}
-                  transition={{ duration: 0.35 }}
-                  className="absolute bottom-5 right-5 z-20 w-[min(360px,calc(100%-2.5rem))] rounded-2xl border border-white/45 bg-white/84 p-4 shadow-xl backdrop-blur-md"
-                >
-                  <p className="text-xs uppercase tracking-[0.22em] text-primary/80">Interactive Detail</p>
-                  <h3 className="mt-2 text-lg font-semibold text-foreground">{activeCard.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-foreground/70">{activeCard.detail}</p>
-                </motion.div>
-              </div>
-            </div>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.6 }}
+              >
+                <a href="/signup" className="inline-block">
+                  <Button
+                    variant="default"
+                    size="lg"
+                    className="hover-scale rounded-3xl px-8 py-6 text-base font-medium"
+                  >
+                    Get Started
+                  </Button>
+                </a>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
-      </div>
-
-      <div className="relative mx-auto mt-8 max-w-6xl space-y-7 px-6 pb-8">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.7 }}
-          className="grid gap-5 md:grid-cols-3"
-        >
-          <article className="rounded-3xl border border-[#d3c2b6] bg-[#f9f4ef] p-6">
-            <p className="text-xs uppercase tracking-[0.22em] text-primary/70">Furniture Highlight</p>
-            <h3 className="mt-3 text-2xl">Grounded Lounge Geometry</h3>
-            <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-              Low silhouettes and generous seating depth maintain visual calm while supporting daily flexibility.
-            </p>
-          </article>
-
-          <article className="rounded-3xl border border-[#d3c2b6] bg-[#f5eee8] p-6">
-            <p className="text-xs uppercase tracking-[0.22em] text-primary/70">Material Language</p>
-            <h3 className="mt-3 text-2xl">Oak, Linen, Matte Metal</h3>
-            <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-              Light wood grain and tactile fabrics hold softness under daylight, then absorb warm ambient light at night.
-            </p>
-          </article>
-
-          <article className="rounded-3xl border border-[#d3c2b6] bg-[#efe6de] p-6">
-            <p className="text-xs uppercase tracking-[0.22em] text-primary/70">Design Philosophy</p>
-            <h3 className="mt-3 text-2xl">Emotion Through Light</h3>
-            <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-              Instead of changing objects, we tune illumination and contrast so the same room tells two stories.
-            </p>
-          </article>
-        </motion.div>
-
-        <motion.article
-          initial={{ opacity: 0, y: 28 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.2 }}
-          transition={{ duration: 0.8 }}
-          className="grid gap-6 rounded-[2rem] border border-[#d1b8a8] bg-[#2a1d17] p-7 text-[#f8efe7] md:grid-cols-2 md:p-9"
-        >
-          <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-[#e6c8ac]">Transformation Story</p>
-            <h3 className="mt-3 text-3xl font-semibold leading-tight">Before / After, Same Room. Different Atmosphere.</h3>
-          </div>
-          <p className="text-sm leading-relaxed text-[#f4e5d8]/85 md:text-base">
-            Morning mode maximizes clarity for work and family movement. Night mode lowers contrast, boosts warm
-            pockets of light, and deepens shadow layering for a cinematic lounge feel without visual clutter.
-          </p>
-        </motion.article>
       </div>
     </section>
   );
