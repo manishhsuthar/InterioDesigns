@@ -1,5 +1,5 @@
 import Navbar from "@/components/layout/Navbar";
-import HeroSection from "@/components/home/HeroSection";
+import DayNightStudioSection from "@/components/home/DayNightStudioSection";
 import FeaturesGrid from "@/components/home/FeaturesGrid";
 import ProjectCardStack from "@/components/home/ProjectCardStack";
 import Footer from "@/components/layout/Footer";
@@ -14,7 +14,7 @@ const Index = () => {
       <Navbar />
       <main>
         <section id="home" className="scroll-mt-32">
-          <HeroSection />
+          <DayNightStudioSection />
         </section>
         <FeaturesGrid />
         <ProjectCardStack />
